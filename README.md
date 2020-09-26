@@ -5,4 +5,4 @@ Smart Docking Aid adds two new SAS modes to level 3 probe cores and level 3 pilo
 ![https://i.imgur.com/GCsuwWk.png](https://i.imgur.com/GCsuwWk.png "")
 
 ### License
-This project is licensed under the CC BY-NC-SA 4.0
+This work is licensed under the Attribution-NonCommercial-ShareAlike 4.0 International license (CC BY-NC-SA 4.0)
