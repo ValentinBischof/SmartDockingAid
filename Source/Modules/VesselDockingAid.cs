@@ -37,7 +37,8 @@ namespace SmartDockingAid
                 }
             }
 
-            if (pilotAvailable || moduleAvailable)
+
+            if (pilotAvailable || moduleAvailable || HighLogic.CurrentGame.Parameters.CustomParams<GameParameters.AdvancedParams>().EnableFullSASInSandbox)
                 state = true;
             else
                 state = false;
@@ -64,7 +65,7 @@ namespace SmartDockingAid
 
         private void Update()
         {
-            if (HighLogic.LoadedScene == GameScenes.FLIGHT && active && vessel)
+            if (HighLogic.LoadedScene == GameScenes.FLIGHT && active)
             {
                 if (!vessel.IsControllable || !vessel.Autopilot.Enabled)
                     return;

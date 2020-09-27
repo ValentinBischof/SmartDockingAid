@@ -18,7 +18,7 @@ namespace SmartDockingAid
         public void Awake()
         {
             string path = KSPUtil.ApplicationRootPath + "GameData/SmartDockingAid/";
-            AssetBundle asset = AssetBundle.LoadFromFile(path + "Assets/assets.ksp");
+            AssetBundle asset = AssetBundle.LoadFromFile(path + "Assets/assets");
 
             if (asset == null)
             {

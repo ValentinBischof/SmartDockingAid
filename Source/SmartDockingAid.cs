@@ -38,8 +38,8 @@ namespace SmartDockingAid
             GameEvents.onVesselSwitching.Add(onVesselChange);
             GameEvents.onDockingComplete.Add(onDockingComplete);
             GameEvents.onGameSceneSwitchRequested.Add(onGameScenceSwitch);
+            GameEvents.OnGameSettingsApplied.Add(OnGameSettingsApplied);
         }
-
 
         private void onFlightReady()
         {
@@ -113,12 +113,12 @@ namespace SmartDockingAid
             }
         }
 
-        private void onVesselChange(Vessel vessel5, Vessel vessel6)
+        private void onVesselChange(Vessel vessel1, Vessel vessel2)
         {
-            if (vessel6 != null)
-                this.vessel = vessel6;
+            if (vessel2 != null)
+                this.vessel = vessel2;
             else
-                vessel = vessel5;
+                vessel = vessel1;
 
             module = vessel.GetComponent<VesselDockingAid>() as VesselDockingAid;
 
@@ -179,6 +179,27 @@ namespace SmartDockingAid
             lastButton = modebuttons[0];
             modebuttons[0].changeState(buttonActive);
             vessel.Autopilot.Enabled = false;
+        }
+
+        private void OnGameSettingsApplied()
+        {
+            module = vessel.GetComponent<VesselDockingAid>() as VesselDockingAid;
+
+            if (module == null)
+                return;
+
+            module.Setup(out autopilotState);
+            if (autopilotState)
+            {
+                Debug.Log($"[SmartDockingAid] Active on vessel {vessel.GetDisplayName()}");
+            }  
+            else
+            {
+                parallelNegative.gameObject.SetActive(false);
+                parallelPlus.gameObject.SetActive(false);
+                module.onModeChange(TargetMode.OFF);
+            }
+
         }
 
         private void onToggleButtonPressed(UIStateToggleButton button)
@@ -270,6 +291,7 @@ namespace SmartDockingAid
             GameEvents.onVesselSwitching.Remove(onVesselChange);
             GameEvents.onDockingComplete.Remove(onDockingComplete);
             GameEvents.onGameSceneSwitchRequested.Remove(onGameScenceSwitch);
+            GameEvents.OnGameSettingsApplied.Remove(OnGameSettingsApplied);
         }
     }
 }
