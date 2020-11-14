@@ -38,10 +38,18 @@ namespace SmartDockingAid
             }
 
 
-            if (pilotAvailable || moduleAvailable || HighLogic.CurrentGame.Parameters.CustomParams<GameParameters.AdvancedParams>().EnableFullSASInSandbox)
+            if (pilotAvailable ||  moduleAvailable || HighLogic.CurrentGame.Parameters.CustomParams<GameParameters.AdvancedParams>().EnableFullSASInSandbox)
                 state = true;
             else
                 state = false;
+        }
+
+        public void changeSASstate(bool isOn)
+        {
+            if (isOn)
+                vessel.Autopilot.Enable();
+            else
+                vessel.Autopilot.Disable();
         }
 
 

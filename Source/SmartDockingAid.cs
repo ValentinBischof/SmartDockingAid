@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using KSP.UI;
 using KSP.UI.TooltipTypes;
+using KSP.UI.Screens.Flight;
 using SmartDockingAid.UI;
 using System;
 
@@ -24,6 +25,7 @@ namespace SmartDockingAid
 
         private bool autopilotState;
         private bool buttonInit = false;
+        private bool SASstate;
 
         public enum TargetMode
         {
@@ -97,6 +99,7 @@ namespace SmartDockingAid
             }
 
             vessel = FlightGlobals.ActiveVessel;
+            SASstate = vessel.Autopilot.Enabled;
             module = vessel.GetComponent<VesselDockingAid>() as VesselDockingAid;
 
             if (module == null)
@@ -120,6 +123,7 @@ namespace SmartDockingAid
             else
                 vessel = vessel1;
 
+            SASstate = vessel.Autopilot.Enabled;
             module = vessel.GetComponent<VesselDockingAid>() as VesselDockingAid;
 
             if (module == null)
@@ -164,6 +168,7 @@ namespace SmartDockingAid
 
         private void onDockingComplete(GameEvents.FromToAction<Part, Part> part)
         {
+            SASstate = vessel.Autopilot.Enabled;
             module = vessel.GetComponent<VesselDockingAid>() as VesselDockingAid;
 
             if (module == null)
@@ -175,14 +180,15 @@ namespace SmartDockingAid
                 Debug.Log($"[SmartDockingAid] Active on vessel {vessel.GetDisplayName()}");
             }
             module.onModeChange(TargetMode.OFF);
+            module.changeSASstate(false);
             lastButton.SetState(false);
             lastButton = modebuttons[0];
             modebuttons[0].changeState(buttonActive);
-            vessel.Autopilot.Enabled = false;
         }
 
         private void OnGameSettingsApplied()
         {
+            SASstate = vessel.Autopilot.Enabled;
             module = vessel.GetComponent<VesselDockingAid>() as VesselDockingAid;
 
             if (module == null)
@@ -235,18 +241,22 @@ namespace SmartDockingAid
                 module.onModeChange(TargetMode.OFF);
             }
         }
+
         private void onButtonInteractableStateChanged()
         {
             parallelNegative.interactable = modebuttons[8].interactable;
             parallelPlus.interactable = modebuttons[8].interactable;
             if (!modebuttons[8].interactable)
             {
+                modebuttons[0].changeState(buttonActive);
+                lastButton.SetState(false);
+                lastButton = modebuttons[0];
                 module.onModeChange(TargetMode.OFF);
             }
         }
 
         private void onButtonStateChanged()
-        {   
+        {
             parallelNegative.gameObject.SetActive(modebuttons[8].gameObject.activeSelf);
             parallelPlus.gameObject.SetActive(modebuttons[8].gameObject.activeSelf);
             if (!modebuttons[8].gameObject.activeSelf)
@@ -255,6 +265,18 @@ namespace SmartDockingAid
             }
         }
 
+        private void onSASStateChanged()
+        {
+            if (!vessel.Autopilot.Enabled)
+            {
+                parallelNegative.SetState(false);
+                parallelPlus.SetState(false);
+                modebuttons[0].changeState(buttonActive);
+                lastButton = modebuttons[0];
+                module.onModeChange(TargetMode.OFF);
+            }
+            SASstate = vessel.Autopilot.Enabled;
+        }
 
         private void Update()
         {
@@ -265,6 +287,9 @@ namespace SmartDockingAid
 
                 if (modebuttons[8].interactable != parallelNegative.interactable)
                     onButtonInteractableStateChanged();
+
+                if (vessel.Autopilot.Enabled != SASstate)
+                    onSASStateChanged();
             }
         }
 
