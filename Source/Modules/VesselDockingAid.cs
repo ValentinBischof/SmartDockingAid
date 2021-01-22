@@ -1,4 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Reflection;
+using UnityEngine;
 using SmartDockingAid.Flight;
 
 namespace SmartDockingAid
@@ -15,41 +21,36 @@ namespace SmartDockingAid
         private bool moduleAvailable;
         private bool active = false;
 
-        public void Setup(out bool state)
+        public bool Setup()
         {
             pilotAvailable = false;
             moduleAvailable = false;
 
-            crew = vessel.GetVesselCrew();
-            foreach (ProtoCrewMember kerbal in crew)
-            {
-                if (kerbal.experienceTrait.CrewMemberExperienceLevel() > AssetLoader.minPilotLevel)
-                {
-                    pilotAvailable = true;
-                }
-            }
+            pilotAvailable = vessel.GetVesselCrew().Any(c => c.experienceTrait.CrewMemberExperienceLevel() > AssetLoader.minPilotLevel);
 
             foreach (Part part in vessel.parts)
             {
                 if (part.HasModuleImplementing<ModuleDockingAid>())
-                { 
+                {
+                    ModuleDockingAid moduleDockingAid = part.Modules.GetModule<ModuleDockingAid>();
+                    if (!moduleDockingAid.active) continue;
                     moduleAvailable = true;
                 }
             }
 
-
-            if (pilotAvailable ||  moduleAvailable || HighLogic.CurrentGame.Parameters.CustomParams<GameParameters.AdvancedParams>().EnableFullSASInSandbox)
-                state = true;
-            else
-                state = false;
+            return (pilotAvailable || moduleAvailable || HighLogic.CurrentGame.Parameters.CustomParams<GameParameters.AdvancedParams>().EnableFullSASInSandbox);              
         }
 
         public void changeSASstate(bool isOn)
-        {
+        {           
             if (isOn)
+            {
                 vessel.Autopilot.Enable();
+            }
             else
-                vessel.Autopilot.Disable();
+            {
+               vessel.Autopilot.Disable();
+            }              
         }
 
 
@@ -71,7 +72,7 @@ namespace SmartDockingAid
             }
         }
 
-        private void Update()
+        public void Update()
         {
             if (HighLogic.LoadedScene == GameScenes.FLIGHT && active)
             {
@@ -82,7 +83,7 @@ namespace SmartDockingAid
                     target = vessel.targetObject;
 
                 vessel.Autopilot.SAS.lockedMode = false;
-                vessel.Autopilot.SAS.SetTargetOrientation(target.getAttitude(targetMode), false); 
+                vessel.Autopilot.SAS.SetTargetOrientation(target.getAttitude(targetMode), false);
             }
         }
     }
