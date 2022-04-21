@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <Import Project="$(SolutionDir)\SmartDockingAid.csproj.user" Condition="Exists('$(SolutionDir)\SmartDockingAid.csproj.user')"/>
+  <Import Project="$(SolutionDir)\SmartDockingAid.csproj.user" Condition="Exists('$(SolutionDir)\SmartDockingAid.csproj.user')" />
   <PropertyGroup>
     <KSPExecutable Condition="$([MSBuild]::IsOsPlatform('Windows'))">KSP_x64.exe</KSPExecutable>
     <KSPExecutable Condition="$([MSBuild]::IsOsPlatform('OSX'))">KSP.app</KSPExecutable>
@@ -78,39 +78,31 @@
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-
   <PropertyGroup>
     <RepoRootPath>$(SolutionDir)\..\</RepoRootPath>
     <GameDataFolderName>SmartDockingAid</GameDataFolderName>
     <UsePluginsFolder>false</UsePluginsFolder>
     <CopyReleaseBinariesToRepo>true</CopyReleaseBinariesToRepo>
   </PropertyGroup>
-
   <Target Name="AfterBuild">
-    <Error Condition="'$(ReferencePath)' == '' OR !Exists('$(ReferencePath)')"
-           Text="ReferencePath=$(ReferencePath) os empty or isn't a valid path"/>
-
+    <Error Condition="'$(ReferencePath)' == '' OR !Exists('$(ReferencePath)')" Text="ReferencePath=$(ReferencePath) os empty or isn't a valid path" />
     <CallTarget Targets="CopyToKSP" />
-    <CallTarget Targets="CopyBinariesToRepo" Condition="'$(Configuration)' == 'Release' AND '$(CopyReleaseBinariesToRepo)' == 'true'"/>
-    <CallTarget Targets="MakeReleaseZip" Condition="'$(Configuration)' == 'Release'"/>
+    <CallTarget Targets="CopyBinariesToRepo" Condition="'$(Configuration)' == 'Release' AND '$(CopyReleaseBinariesToRepo)' == 'true'" />
+    <CallTarget Targets="MakeReleaseZip" Condition="'$(Configuration)' == 'Release'" />
   </Target>
-
   <Target Name="CopyToKSP">
     <RemoveDir Condition="Exists('$(ReferencePath)\GameData\$(GameDataFolderName)')" Directories="$(ReferencePath)\GameData\$(GameDataFolderName)" />
     <ItemGroup>
       <GameDataFiles Include="$(RepoRootPath)\GameData\**\*.*" />
     </ItemGroup>
     <Copy SourceFiles="@(GameDataFiles)" DestinationFolder="$(ReferencePath)\GameData\%(RecursiveDir)" />
-
     <PropertyGroup>
       <BinariesKSPGameDataPath Condition="'$(UsePluginsFolder)' == 'true'">$(ReferencePath)\GameData\$(GameDataFolderName)\Plugins</BinariesKSPGameDataPath>
       <BinariesKSPGameDataPath Condition="'$(UsePluginsFolder)' == 'false'">$(ReferencePath)\GameData\$(GameDataFolderName)</BinariesKSPGameDataPath>
     </PropertyGroup>
-
     <Copy SourceFiles="$(TargetDir)\$(AssemblyName).dll" DestinationFolder="$(BinariesKSPGameDataPath)" />
     <Copy SourceFiles="$(TargetDir)\$(AssemblyName).pdb" DestinationFolder="$(BinariesKSPGameDataPath)" />
   </Target>
-
   <Target Name="CopyBinariesToRepo">
     <PropertyGroup>
       <BinariesRepoRootPath Condition="'$(UsePluginsFolder)' == 'true'">$(RepoRootPath)\GameData\$(GameDataFolderName)\Plugins</BinariesRepoRootPath>
@@ -119,7 +111,6 @@
     <Copy SourceFiles="$(TargetDir)\$(AssemblyName).dll" DestinationFolder="$(BinariesRepoRootPath)" />
     <Copy SourceFiles="$(TargetDir)\$(AssemblyName).pdb" DestinationFolder="$(BinariesRepoRootPath)" />
   </Target>
-
   <Target Name="MakeReleaseZip">
     <PropertyGroup>
       <PublishFolder>$(RepoRootPath)\Releases</PublishFolder>
@@ -132,7 +123,6 @@
     <ItemGroup>
       <GameDataFiles Include="$(RepoRootPath)\GameData\**\*.*" />
     </ItemGroup>
-
     <Copy SourceFiles="@(GameDataFiles)" DestinationFolder="$(PublishTempFolderPath)\GameData\%(RecursiveDir)" />
     <Copy SourceFiles="$(TargetDir)\$(AssemblyName).dll" DestinationFolder="$(PublishBinariesPath)" />
     <Copy SourceFiles="$(TargetDir)\$(AssemblyName).pdb" DestinationFolder="$(PublishBinariesPath)" />
