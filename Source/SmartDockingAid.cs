@@ -1,17 +1,94 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
+﻿using System;
+using System.Collections;
 using KSP.UI;
 using KSP.UI.TooltipTypes;
-using KSP.UI.Screens.Flight;
 using SmartDockingAid.UI;
-using System;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace SmartDockingAid
 {
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     public class SmartDockingAid : MonoBehaviour
     {
+        private static Sprite _parallelMinusSprite;
+        private static Sprite _parallelPlusSprite;
+        private static VesselAutopilot.AutopilotMode? _availableAtSASMode;
+
+
+        public static Sprite ParallelMinusSprite
+        {
+            get
+            {
+                if (_parallelMinusSprite == null)
+                {
+                    Texture2D tex = GameDatabase.Instance.GetTexture("SmartDockingAid/Assets/ParallelMinus", false);
+                    if (tex == null)
+                    {
+                        tex = new Texture2D(16, 16);
+                        Debug.LogError($"[SmartDockingAid] Failed to load texture \"SmartDockingAid/Assets/ParallelMinus\"");
+                    }
+
+                    _parallelMinusSprite = tex.toSprite();
+                }
+                
+                return _parallelMinusSprite;
+            }
+        }
+
+        public static Sprite ParallelPlusSprite
+        {
+            get
+            {
+                if (_parallelPlusSprite == null)
+                {
+                    Texture2D tex = GameDatabase.Instance.GetTexture("SmartDockingAid/Assets/ParallelPlus", false);
+                    if (tex == null)
+                    {
+                        tex = new Texture2D(16, 16);
+                        Debug.LogError($"[SmartDockingAid] Failed to load texture \"SmartDockingAid/Assets/ParallelPlus\"");
+                    }
+
+                    _parallelPlusSprite = tex.toSprite();
+                }
+
+                return _parallelPlusSprite;
+            }
+        }
+
+        public static VesselAutopilot.AutopilotMode AvailableAtSASMode
+        {
+            get
+            {
+                if (_availableAtSASMode == null)
+                {
+                    ConfigNode node = GameDatabase.Instance.GetConfigNode("SmartDockingAid/SDASETTINGS");
+                    if (node == null)
+                    {
+                        Debug.LogWarning($"[SmartDockingAid] Settings file could not be located");
+                    }
+                    else
+                    {
+                        string val = node.GetValue("availableAtSASMode");
+                        if (string.IsNullOrEmpty(val) || !Enum.TryParse(val, out VesselAutopilot.AutopilotMode mode))
+                            Debug.LogWarning($"[SmartDockingAid] No valid \"minPilotExperience\" value found in settings file");
+                        else
+                            _availableAtSASMode = mode;
+                    }
+
+                    if (_availableAtSASMode == null)
+                    {
+                        _availableAtSASMode = VesselAutopilot.AutopilotMode.Target;
+                        Debug.Log($"[SmartDockingAid] Default settings will be applied");
+                    }
+                }
+
+                return (VesselAutopilot.AutopilotMode)_availableAtSASMode;
+            }
+        }
+
         private const string DISPLAYNAME = "SmartDockingAid";
+
 
         private UIStateToggleButton[] modebuttons;
 
@@ -21,10 +98,9 @@ namespace SmartDockingAid
         private UIStateToggleButton parallelPlus;
         private UIStateToggleButton parallelNegative;
 
-        private Vessel vessel;
-        private VesselDockingAid vesselDockingAid;
+        private VesselModuleDockingAid VesselModule => FlightGlobals.ActiveVessel.FindVesselModuleImplementing<VesselModuleDockingAid>();
 
-        private bool autopilotState;
+        private bool isAvailable;
         private bool buttonInit = false;
         private bool SASstate;
 
@@ -42,13 +118,15 @@ namespace SmartDockingAid
             GameEvents.onDockingComplete.Add(onDockingComplete);
             GameEvents.onGameSceneSwitchRequested.Add(onGameScenceSwitch);
             GameEvents.OnGameSettingsApplied.Add(OnGameSettingsApplied);
+            GameEvents.onKerbalLevelUp.Add(OnKerbalLevelUp);
         }
 
         private void onFlightReady()
         {
             if (!buttonInit)
             {
-                modebuttons = FindObjectOfType<VesselAutopilotUI>().modeButtons;
+                VesselAutopilotUI autopilotUI = FlightUIModeController.Instance.navBall.GetComponentInChildren<VesselAutopilotUI>();
+                modebuttons = autopilotUI.modeButtons;
                 modebuttons[0].getSpriteStates(out buttonActive, out buttonDisabled);
 
                 foreach (UIStateToggleButton button in modebuttons)
@@ -87,36 +165,32 @@ namespace SmartDockingAid
                 this.parallelPlus.transform.position = new Vector3(parallelPlus.gameObject.transform.position.x + ((4 * GameSettings.UI_SCALE_NAVBALL) * GameSettings.UI_SCALE), parallelPlus.gameObject.transform.position.y - ((25 * GameSettings.UI_SCALE_NAVBALL) * GameSettings.UI_SCALE));
 
                 parallelNegative.GetComponent<TooltipController_Text>().textString = "Parallel -";
-                parallelNegative.GetChild("Image").GetComponent<Image>().sprite = AssetLoader.parallelMinus.toSprite();
-                parallelNegative.transform.SetParent(UnityEngine.Object.FindObjectOfType<VesselAutopilotUI>().transform);
+                parallelNegative.GetChild("Image").GetComponent<Image>().sprite = ParallelMinusSprite;
+                parallelNegative.transform.SetParent(autopilotUI.transform);
                 parallelPlus.GetComponent<TooltipController_Text>().textString = "Parallel +";
-                parallelPlus.GetChild("Image").GetComponent<Image>().sprite = AssetLoader.parallelPlus.toSprite(); 
-                parallelPlus.transform.SetParent(UnityEngine.Object.FindObjectOfType<VesselAutopilotUI>().transform);
+                parallelPlus.GetChild("Image").GetComponent<Image>().sprite = ParallelPlusSprite; 
+                parallelPlus.transform.SetParent(autopilotUI.transform);
 
                 buttonInit = true;
-
-                Debug.Log($"[{DISPLAYNAME}] UI initiated");
             }
 
-            vessel = FlightGlobals.ActiveVessel;
-            SetNewState(false, true);
+            SetNewState(true);
         }
 
-        private void SetNewState(bool disable, bool reset)
+        private void SetNewState(bool reset)
         {           
             if (reset)
             {
-                vesselDockingAid = vessel.GetComponent<VesselDockingAid>() as VesselDockingAid;
-                autopilotState = vesselDockingAid.Setup();
-                SASstate = vessel.Autopilot.Enabled;
+                SASstate = FlightGlobals.ActiveVessel.Autopilot.Enabled;
+                isAvailable = AvailableAtSASMode.AvailableAtLevel(FlightGlobals.ActiveVessel);
             }
             
-            if (autopilotState && !disable)
+            if (isAvailable)
             {
                 parallelPlus.gameObject.SetActive(true);
                 parallelNegative.gameObject.SetActive(true);
 
-                switch(vesselDockingAid.targetMode)
+                switch(VesselModule.targetMode)
                 {
                     case TargetMode.OFF:
                         modebuttons[0].changeState(buttonActive);
@@ -144,19 +218,29 @@ namespace SmartDockingAid
 
         private void onVesselChange(Vessel vessel1, Vessel vessel2)
         {
-            vessel = vessel2 != null ? vessel2 : vessel1;
-            SetNewState(false, true);
+            SetNewState(true);
         }
 
         private void onDockingComplete(GameEvents.FromToAction<Part, Part> part)
         {
-            vessel = FlightGlobals.ActiveVessel;
-            SetNewState(true, true);
+            SetNewState(true);
         }
 
         private void OnGameSettingsApplied()
         { 
-            SetNewState(false, true); 
+            SetNewState(true); 
+        }
+
+        private void OnKerbalLevelUp(ProtoCrewMember data)
+        {
+            StartCoroutine(OnKerbalLevelUpDelayed());
+        }
+
+        private IEnumerator OnKerbalLevelUpDelayed()
+        {
+            yield return new WaitForEndOfFrame();
+            yield return new WaitForEndOfFrame();
+            SetNewState(true);
         }
 
         private void onToggleButtonPressed(UIStateToggleButton button)
@@ -165,24 +249,24 @@ namespace SmartDockingAid
 
             if (button == parallelNegative)
             {
-                vesselDockingAid.onModeChange(TargetMode.PARALLEL_NEGATIVE);
-                SetNewState(false, false);
+                VesselModule.onModeChange(TargetMode.PARALLEL_NEGATIVE);
+                SetNewState(false);
             }
             else
             {
-                vesselDockingAid.onModeChange(TargetMode.PARALLEL_PLUS);
-                SetNewState(false, false);
+                VesselModule.onModeChange(TargetMode.PARALLEL_PLUS);
+                SetNewState(false);
             }
         }
 
         private void onSASbuttonPressed(UIStateToggleButton button)
         {
-            if (autopilotState)
+            if (isAvailable)
             {
                 parallelNegative.SetState(false);
                 parallelPlus.SetState(false);
-                vesselDockingAid.onModeChange(TargetMode.OFF);
-                SetNewState(false, false);
+                VesselModule.onModeChange(TargetMode.OFF);
+                SetNewState(false);
             }
         }
 
@@ -193,8 +277,8 @@ namespace SmartDockingAid
 
             if (!modebuttons[8].interactable)
             {
-                vesselDockingAid.onModeChange(TargetMode.OFF);
-                SetNewState(false, false);
+                VesselModule.onModeChange(TargetMode.OFF);
+                SetNewState(false);
             }
         }
 
@@ -205,24 +289,24 @@ namespace SmartDockingAid
 
             if (!modebuttons[8].gameObject.activeSelf)
             {
-                vesselDockingAid.onModeChange(TargetMode.OFF);
+                VesselModule.onModeChange(TargetMode.OFF);
             }
         }
 
         private void onSASStateChanged()
         {
-            SASstate = vessel.Autopilot.Enabled;
+            SASstate = FlightGlobals.ActiveVessel.Autopilot.Enabled;
 
-            if (!vessel.Autopilot.Enabled)
+            if (!FlightGlobals.ActiveVessel.Autopilot.Enabled)
             {
-                vesselDockingAid.onModeChange(TargetMode.OFF);
-                SetNewState(false, false);
+                VesselModule.onModeChange(TargetMode.OFF);
+                SetNewState(false);
             }           
         }
 
         public void Update()
         {
-            if (autopilotState)
+            if (isAvailable)
             {
                 if (modebuttons[8].gameObject.activeSelf != parallelNegative.gameObject.activeSelf)
                     onButtonStateChanged();
@@ -230,15 +314,13 @@ namespace SmartDockingAid
                 if (modebuttons[8].interactable != parallelNegative.interactable)
                     onButtonInteractableStateChanged();
 
-                if (vessel.Autopilot.Enabled != SASstate)
+                if (FlightGlobals.ActiveVessel.Autopilot.Enabled != SASstate)
                     onSASStateChanged();
             }
         }
 
         private void onGameScenceSwitch(GameEvents.FromToAction<GameScenes, GameScenes> data)
         {
-            Debug.Log($"[{DISPLAYNAME}] Destroy()");
-
             parallelNegative.onClick.RemoveAllListeners();
             parallelPlus.onClick.RemoveAllListeners();
 
@@ -251,8 +333,7 @@ namespace SmartDockingAid
             Destroy(parallelPlus.gameObject);
 
             buttonInit = false;
-            vesselDockingAid = null;
-            autopilotState = false;
+            isAvailable = false;
         }
 
         public void OnDestroy()
@@ -262,6 +343,7 @@ namespace SmartDockingAid
             GameEvents.onDockingComplete.Remove(onDockingComplete);
             GameEvents.onGameSceneSwitchRequested.Remove(onGameScenceSwitch);
             GameEvents.OnGameSettingsApplied.Remove(OnGameSettingsApplied);
+            GameEvents.onKerbalLevelUp.Remove(OnKerbalLevelUp);
         }
     }
 }
