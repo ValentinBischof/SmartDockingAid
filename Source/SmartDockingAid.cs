@@ -87,8 +87,31 @@ namespace SmartDockingAid
             }
         }
 
-        private const string DISPLAYNAME = "SmartDockingAid";
-
+        public static int SASLevel
+        {
+            get
+            {
+                switch (AvailableAtSASMode)
+                {
+                    case VesselAutopilot.AutopilotMode.StabilityAssist:
+                        return 0;
+                    case VesselAutopilot.AutopilotMode.Prograde:
+                    case VesselAutopilot.AutopilotMode.Retrograde:
+                        return 1;
+                    case VesselAutopilot.AutopilotMode.Normal:
+                    case VesselAutopilot.AutopilotMode.Antinormal:
+                    case VesselAutopilot.AutopilotMode.RadialIn:
+                    case VesselAutopilot.AutopilotMode.RadialOut:
+                        return 2;
+                    case VesselAutopilot.AutopilotMode.Target:
+                    case VesselAutopilot.AutopilotMode.AntiTarget:
+                    case VesselAutopilot.AutopilotMode.Maneuver:
+                        return 3;
+                    default:
+                        return 0;
+                }
+            }
+        }
 
         private UIStateToggleButton[] modebuttons;
 

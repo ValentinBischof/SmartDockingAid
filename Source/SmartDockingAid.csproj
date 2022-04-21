@@ -71,6 +71,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Extensions\ExtensionsFlight.cs" />
+    <Compile Include="Extensions\OverwriteModuleText.cs" />
     <Compile Include="SmartDockingAid.cs" />
     <Compile Include="VesselDockingAid.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
