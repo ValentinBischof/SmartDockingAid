@@ -234,6 +234,9 @@ namespace SmartDockingAid
             }
             else
             {
+                modebuttons[0].changeState(buttonActive);
+                parallelPlus.SetState(false);
+                parallelNegative.SetState(false);
                 parallelNegative.gameObject.SetActive(false);
                 parallelPlus.gameObject.SetActive(false);
             }
