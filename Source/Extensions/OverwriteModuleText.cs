@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Experience.Effects;
+using KSP.Localization;
 using UnityEngine;
 
 namespace SmartDockingAid.Extensions
@@ -12,31 +9,43 @@ namespace SmartDockingAid.Extensions
     {
         public void Start()
         {
-            List<AvailablePart> parts = PartLoader.LoadedPartsList.Where(p => p.partPrefab.Modules.GetModule<ModuleSAS>()).ToList();
-
-            foreach (AvailablePart part in parts)
+            foreach (AvailablePart part in PartLoader.LoadedPartsList)
             {
-                ModuleSAS SASmodule = part.partPrefab.FindModuleImplementing<ModuleSAS>();
-                AvailablePart.ModuleInfo moduleInfo = part.moduleInfos.Where(m => m.moduleName == "SAS").First();
-                int serviceLevel = (SASmodule.SASServiceLevel + 1);
-                string moduleText = string.Empty;
-                for (int i = 0; i < serviceLevel; i++)
-                    moduleText += $"{SASLevels[i]} \n";
+                if (part.partPrefab == null)
+                    continue;
 
-                if (part.partPrefab.HasModuleImplementing<ModuleDockingAid>())
-                    moduleText += $"{SASLevels[4]} \n";
+                ModuleSAS sasModule = part.partPrefab.FindModuleImplementing<ModuleSAS>();
+                if (sasModule == null)
+                    continue;
 
-                moduleInfo.info = moduleText;
+                int sasServiceLevel = sasModule.SASServiceLevel;
+                int sdaRequiredLevel = SmartDockingAid.SASLevel;
+                if (sasServiceLevel < sdaRequiredLevel)
+                    continue;
+
+                AvailablePart.ModuleInfo moduleInfo = part.moduleInfos.Find(p => p.moduleName == "SAS");
+                if (moduleInfo == null)
+                    continue;
+
+                string text = string.Empty;
+                for (int i = 0; i < Mathf.Min(sasServiceLevel + 1, AutopilotSkill.SkillsReadable.Length); i++)
+                {
+                    if (i != 0)
+                        text += "\n";
+
+                    if (i == sdaRequiredLevel)
+                        text += "Parallel to target\n";
+
+                    text += AutopilotSkill.SkillsReadable[i];
+                }
+                if (sasModule.standalone)
+                    text += sasModule.resHandler.PrintModuleResources();
+
+                if (!sasModule.moduleIsEnabled)
+                    text += Localizer.Format("#autoLOC_218888");
+
+                moduleInfo.info = text;
             }
         }
-
-        private string[] SASLevels = new string[5]
-        {
-            $"S0: Stability Assist",
-            $"S1: Prograde / Retrograde",
-            $"S2: Radial / Normal",
-            $"S3: Maneuver / Target",
-            $"S{AssetLoader.minPilotLevel}: Parallel+ / Parallel-"
-        };
     }
 }

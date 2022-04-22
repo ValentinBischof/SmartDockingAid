@@ -6,3 +6,19 @@ Smart Docking Aid adds two new SAS modes to level 3 probe cores and level 3 pilo
 
 ### License
 This work is licensed under the Attribution-NonCommercial-ShareAlike 4.0 International license (CC BY-NC-SA 4.0)
+
+### Building
+After loading the solution in your IDE, add a `ReferencePath` to the root of your KSP install :
+
+For Visual Studio, right-click on the `SmartDockingAid` project > `Properties` > `Reference Paths`, then save, close and re-open the solution for the changes to propagate.
+
+Alternatively, create a `SmartDockingAid.csproj.user` file in the `Source` folder, with the following content :
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ReferencePath>Absolute\Path\To\Your\KSP\Install\Folder</ReferencePath>
+  </PropertyGroup>
+</Project>
+```
+Then close / re-open the solution.
