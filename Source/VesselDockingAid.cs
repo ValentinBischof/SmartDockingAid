@@ -10,7 +10,7 @@ namespace SmartDockingAid
 
         public override bool ShouldBeActive()
         {
-            return vessel.loaded && vessel.IsControllable && vessel.Autopilot.Enabled && vessel.targetObject != null;
+            return vessel.loaded && vessel.IsControllable && vessel.Autopilot.Enabled;
         }
 
         public void changeSASstate(bool isOn)
@@ -46,7 +46,7 @@ namespace SmartDockingAid
 
         public void Update()
         {
-            if (active)
+            if (active && vessel.targetObject != null)
             {
                 vessel.Autopilot.SAS.lockedMode = false;
                 vessel.Autopilot.SAS.SetTargetOrientation(vessel.targetObject.getAttitude(targetMode), false);
