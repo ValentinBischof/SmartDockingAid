@@ -12,12 +12,12 @@ After loading the solution in your IDE, add a `ReferencePath` to the root of you
 
 For Visual Studio, right-click on the `SmartDockingAid` project > `Properties` > `Reference Paths`, then save, close and re-open the solution for the changes to propagate.
 
-Alternatively, create a `SmartDockingAid.csproj.user` file in the `Source` folder, with the follwowing content :
+Alternatively, create a `SmartDockingAid.csproj.user` file in the `Source` folder, with the following content :
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <ReferencePath>Absolute\Path\To\Your\KSP\Install</ReferencePath>
+    <ReferencePath>Absolute\Path\To\Your\KSP\Install\Folder</ReferencePath>
   </PropertyGroup>
 </Project>
 ```
