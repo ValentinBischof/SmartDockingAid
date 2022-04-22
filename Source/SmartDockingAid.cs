@@ -137,7 +137,7 @@ namespace SmartDockingAid
         public void Start()
         {
             GameEvents.onFlightReady.Add(onFlightReady);
-            GameEvents.onVesselSwitching.Add(onVesselChange);
+            GameEvents.onVesselChange.Add(onVesselChange);
             GameEvents.onDockingComplete.Add(onDockingComplete);
             GameEvents.onGameSceneSwitchRequested.Add(onGameScenceSwitch);
             GameEvents.OnGameSettingsApplied.Add(OnGameSettingsApplied);
@@ -239,7 +239,7 @@ namespace SmartDockingAid
             }
         }
 
-        private void onVesselChange(Vessel vessel1, Vessel vessel2)
+        private void onVesselChange(Vessel vessel)
         {
             SetNewState(true);
         }
@@ -362,7 +362,7 @@ namespace SmartDockingAid
         public void OnDestroy()
         {
             GameEvents.onFlightReady.Remove(onFlightReady);
-            GameEvents.onVesselSwitching.Remove(onVesselChange);
+            GameEvents.onVesselChange.Remove(onVesselChange);
             GameEvents.onDockingComplete.Remove(onDockingComplete);
             GameEvents.onGameSceneSwitchRequested.Remove(onGameScenceSwitch);
             GameEvents.OnGameSettingsApplied.Remove(OnGameSettingsApplied);

@@ -8,11 +8,6 @@ namespace SmartDockingAid
 
         private bool active = false;
 
-        public override Activation GetActivation()
-        {
-            return Activation.LoadedVessels;
-        }
-
         public void changeSASstate(bool isOn)
         {           
             if (isOn)
@@ -46,14 +41,11 @@ namespace SmartDockingAid
 
         public void Update()
         {
-            if (HighLogic.LoadedScene == GameScenes.FLIGHT && active)
-            {
-                if (!vessel.IsControllable || !vessel.Autopilot.Enabled || vessel.targetObject == null)
-                    return;
+            if (!active || !vessel.loaded || !vessel.IsControllable || !vessel.Autopilot.Enabled || vessel.targetObject == null)
+                return;
 
-                vessel.Autopilot.SAS.lockedMode = false;
-                vessel.Autopilot.SAS.SetTargetOrientation(vessel.targetObject.getAttitude(targetMode), false);
-            }
+            vessel.Autopilot.SAS.lockedMode = false;
+            vessel.Autopilot.SAS.SetTargetOrientation(vessel.targetObject.getAttitude(targetMode), false);
         }
     }
 }
