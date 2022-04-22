@@ -8,6 +8,11 @@ namespace SmartDockingAid
 
         private bool active = false;
 
+        public override bool ShouldBeActive()
+        {
+            return vessel.loaded && vessel.IsControllable && vessel.Autopilot.Enabled && vessel.targetObject != null;
+        }
+
         public void changeSASstate(bool isOn)
         {           
             if (isOn)
@@ -41,11 +46,11 @@ namespace SmartDockingAid
 
         public void Update()
         {
-            if (!active || !vessel.loaded || !vessel.IsControllable || !vessel.Autopilot.Enabled || vessel.targetObject == null)
-                return;
-
-            vessel.Autopilot.SAS.lockedMode = false;
-            vessel.Autopilot.SAS.SetTargetOrientation(vessel.targetObject.getAttitude(targetMode), false);
+            if (active)
+            {
+                vessel.Autopilot.SAS.lockedMode = false;
+                vessel.Autopilot.SAS.SetTargetOrientation(vessel.targetObject.getAttitude(targetMode), false);
+            }
         }
     }
 }
